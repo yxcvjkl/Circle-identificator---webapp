@@ -53,18 +53,22 @@
         }
 
         function startProcessing() {
-            // Inicializace matic OpenCV
-            src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-            dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-            gray = new cv.Mat();
-            circles = new cv.Mat();
-            cap = new cv.VideoCapture(video);
+    // Definuj rozměry podle toho, co reálně posílá kamera
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+    
+    video.width = width;
+    video.height = height;
 
-            countElement.innerText = "0";
-            countElement.style.color = "#007bff";
+    src = new cv.Mat(height, width, cv.CV_8UC4);
+    dst = new cv.Mat(height, width, cv.CV_8UC4);
+    gray = new cv.Mat();
+    circles = new cv.Mat();
+    cap = new cv.VideoCapture(video);
 
-            renderFrame();
-        }
+    countElement.innerText = "0";
+    renderFrame();
+}
 
         function renderFrame() {
             try {
