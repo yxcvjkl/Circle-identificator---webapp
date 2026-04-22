@@ -79,6 +79,13 @@
                 // 2. Předzpracování: Převod na stupně šedi
                 cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
 
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+
+                cv.adaptiveThreshold(gray, gray, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
+
+                cv.medianBlur(gray, gray, 3);
+                
                 // 3. Rozmazání (Klíčové pro eliminaci čtverečků na papíře)
                 cv.medianBlur(gray, gray, 5);
 
