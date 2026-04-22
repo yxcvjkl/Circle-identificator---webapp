@@ -84,7 +84,7 @@
 
                 // 4. Detekce kružnic (Hough Circles)
                 // Parametry: (vstup, výstup, metoda, dp, minDist, param1, param2, minRadius, maxRadius)
-                cv.HoughCircles(gray, circles, cv.HOUGH_GRADIENT, 1, 45, 75, 40, 10, 80);
+                cv.HoughCircles(gray, circles, cv.HOUGH_GRADIENT, 1, 45, 75, 20, 10, 80);
 
                 // 5. Vykreslení výsledků
                 let circleCount = 0;
