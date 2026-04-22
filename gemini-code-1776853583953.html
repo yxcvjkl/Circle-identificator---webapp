@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Počítač kružnic</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f0f0f0; margin: 0; padding: 20px; }
+        .container { position: relative; display: inline-block; width: 100%; max-width: 500px; }
+        video, canvas { width: 100%; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        #canvasOutput { position: absolute; top: 0; left: 0; }
+        .stats { background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        #count { font-size: 2em; color: #007bff; font-weight: bold; }
+        .loading { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="stats">
+        <div>Nalezeno kružnic:</div>
+        <div id="count">Načítání OpenCV...</div>
+    </div>
+
+    <div class="container">
+        <video id="videoInput" playsinline></video>
+        <canvas id="canvasOutput"></canvas>
+    </div>
+
+    <script async src="opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+
+    <script>
+        const video = document.getElementById('videoInput');
+        const canvasFrame = document.getElementById('canvasOutput');
+        const countElement = document.getElementById('count');
+        let src, dst, gray, circles;
+        let cap;
+
+        function onOpenCvReady() {
+            countElement.innerText = "Zapínám kameru...";
+            countElement.style.color = "orange";
+            
+            // Inicializace kamery
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                    setTimeout(startProcessing, 1000); // Malá pauza na stabilizaci kamery
+                })
+                .catch(function(err) {
+                    console.error("Chyba kamery: " + err);
+                    countElement.innerText = "Chyba kamery";
+                });
+        }
+
+        function startProcessing() {
+            // Inicializace matic OpenCV
+            src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+            dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+            gray = new cv.Mat();
+            circles = new cv.Mat();
+            cap = new cv.VideoCapture(video);
+
+            countElement.innerText = "0";
+            countElement.style.color = "#007bff";
+
+            renderFrame();
+        }
+
+        function renderFrame() {
+            try {
+                // 1. Načtení aktuálního snímku z videa
+                cap.read(src);
+                src.copyTo(dst);
+
+                // 2. Předzpracování: Převod na stupně šedi
+                cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY, 0);
+
+                // 3. Rozmazání (Klíčové pro eliminaci čtverečků na papíře)
+                cv.medianBlur(gray, gray, 5);
+
+                // 4. Detekce kružnic (Hough Circles)
+                // Parametry: (vstup, výstup, metoda, dp, minDist, param1, param2, minRadius, maxRadius)
+                cv.HoughCircles(gray, circles, cv.HOUGH_GRADIENT, 1, 45, 75, 40, 10, 80);
+
+                // 5. Vykreslení výsledků
+                let circleCount = 0;
+                for (let i = 0; i < circles.cols; ++i) {
+                    let x = circles.data32F[i * 3];
+                    let y = circles.data32F[i * 3 + 1];
+                    let radius = circles.data32F[i * 3 + 2];
+                    
+                    // Vykreslit kruh do canvasu
+                    let center = new cv.Point(x, y);
+                    cv.circle(dst, center, radius, [0, 255, 0, 255], 3);
+                    circleCount++;
+                }
+
+                // Aktualizace počítadla na obrazovce
+                countElement.innerText = circleCount;
+
+                // Zobrazení upraveného obrazu uživateli
+                cv.imshow('canvasOutput', dst);
+
+                // Opakování smyčky
+                requestAnimationFrame(renderFrame);
+
+            } catch (err) {
+                console.log("Smyčka zastavena: ", err);
+            }
+        }
+    </script>
+</body>
+</html>
